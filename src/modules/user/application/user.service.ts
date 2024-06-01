@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -7,12 +8,14 @@ import { UserLoginDto } from './dtos/user-login.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../domain/entities/user.entity';
 import { Repository } from 'typeorm';
-import { getPasswordHash } from '../utils/password.utils';
+import { generateSalt, getPasswordHash } from '../utils/password.utils';
 import { JwtPayload } from '../../../common/types/jwt-payload.type';
 import { UserRole } from '../../../common/types/user-role.enum';
 import { getExpTimestamp } from '../utils/token.utils';
 import { sign } from 'jsonwebtoken';
 import * as process from 'process';
+import { UserRegisterDto } from './dtos/user-register.dto';
+import { isDbStatusConflict } from '../../../common/utils/psql.util';
 
 @Injectable()
 export class UserService {
@@ -43,5 +46,23 @@ export class UserService {
     };
 
     return sign(jwtPayload, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  }
+
+  async register(userRegisterDto: UserRegisterDto): Promise<void> {
+    const newUser = new User();
+    newUser.username = userRegisterDto.username;
+    newUser.salt = generateSalt();
+    newUser.password = getPasswordHash(userRegisterDto.password, newUser.salt);
+    newUser.age = userRegisterDto.age;
+    newUser.role = userRegisterDto.role;
+
+    try {
+      await this.userRepository.save(newUser);
+    } catch (err) {
+      if (isDbStatusConflict(err.code)) {
+        throw new ConflictException('Username already exists');
+      }
+      throw err;
+    }
   }
 }
