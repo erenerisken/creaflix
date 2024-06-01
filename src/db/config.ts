@@ -1,4 +1,5 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { User } from '../modules/user/domain/entities/user.entity';
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
@@ -8,7 +9,7 @@ export const dbConfig: DataSourceOptions = {
   password: 'flix',
   database: 'creaflix',
   ssl: false,
-  entities: [__dirname + '/entities/*.entity.ts'],
+  entities: [User],
   migrations: [__dirname + '/migrations/*.ts'],
 };
 
