@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movie } from '../domain/entities/movie.entity';
 import { FindManyOptions, LessThanOrEqual, Like, Repository } from 'typeorm';
@@ -7,6 +11,8 @@ import { isDbStatusConflict } from '../../../common/utils/psql.util';
 import { Session } from '../domain/entities/session.entity';
 import { MoviesListDto } from './dtos/movies-list.dto';
 import { MovieFilter } from './types/movie-filter.interface';
+import { getSessionUniqueKey } from '../utils/session.util';
+import { isEmpty } from 'lodash';
 
 @Injectable()
 export class MovieService {
@@ -52,6 +58,89 @@ export class MovieService {
           );
         }
         throw err;
+      }
+    });
+  }
+
+  async update(movieId: number, movieUpsertDto: MovieUpsertDto): Promise<void> {
+    await this.movieRepository.manager.transaction(async (txn) => {
+      const existingMovie = await txn.findOne(Movie, {
+        where: { id: movieId },
+        relations: ['sessions'],
+      });
+
+      if (!existingMovie) {
+        throw new NotFoundException('Movie not found');
+      }
+
+      existingMovie.name = movieUpsertDto.name;
+      existingMovie.minAge = movieUpsertDto.minAge;
+
+      let updatedMovie: Movie;
+      try {
+        updatedMovie = await txn.save(existingMovie);
+      } catch (err) {
+        if (isDbStatusConflict(err.code)) {
+          throw new ConflictException('Movie update conflict');
+        }
+        throw err;
+      }
+
+      const existingUniqueKeys = updatedMovie.sessions.map((session) =>
+        getSessionUniqueKey(session.date, session.timeSlot, session.roomNumber),
+      );
+      const newUniqueKeys = movieUpsertDto.sessions.map((session) =>
+        getSessionUniqueKey(session.date, session.timeSlot, session.roomNumber),
+      );
+
+      const sessionsToDelete = updatedMovie.sessions.filter(
+        (session) =>
+          !newUniqueKeys.includes(
+            getSessionUniqueKey(
+              session.date,
+              session.timeSlot,
+              session.roomNumber,
+            ),
+          ),
+      );
+
+      if (!isEmpty(sessionsToDelete)) {
+        await txn.remove(sessionsToDelete);
+      }
+
+      const sessionsToInsert = movieUpsertDto.sessions
+        .filter(
+          (sessionDto) =>
+            !existingUniqueKeys.includes(
+              getSessionUniqueKey(
+                sessionDto.date,
+                sessionDto.timeSlot,
+                sessionDto.roomNumber,
+              ),
+            ),
+        )
+        .map((sessionDto) => {
+          const session = new Session();
+          session.movieId = updatedMovie.id;
+          session.movie = updatedMovie;
+          session.date = sessionDto.date;
+          session.timeSlot = sessionDto.timeSlot;
+          session.roomNumber = sessionDto.roomNumber;
+
+          return session;
+        });
+
+      if (!isEmpty(sessionsToInsert)) {
+        try {
+          await txn.save(sessionsToInsert);
+        } catch (err) {
+          if (isDbStatusConflict(err.code)) {
+            throw new ConflictException(
+              'Sessions could not be created due to conflict in rooms',
+            );
+          }
+          throw err;
+        }
       }
     });
   }

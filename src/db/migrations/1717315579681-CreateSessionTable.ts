@@ -39,7 +39,7 @@ export class CreateSessionTable1717315579681 implements MigrationInterface {
         ],
         uniques: [
           {
-            columnNames: ['time_slot', 'room_number'],
+            columnNames: ['date', 'time_slot', 'room_number'],
           },
         ],
       }),

@@ -3,9 +3,11 @@ import {
   Controller,
   DefaultValuePipe,
   Get,
+  Param,
   ParseEnumPipe,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -63,5 +65,16 @@ export class MovieController {
     }
 
     return this.movieService.list(filters);
+  }
+
+  @UseGuards(RoleGuard)
+  @Put(':id')
+  async update(
+    @Param('id', new ParseIntPipe()) id: number,
+    @Body() movieUpsertDto: MovieUpsertDto,
+  ) {
+    await this.movieService.update(id, movieUpsertDto);
+
+    return { result: 'success' };
   }
 }
