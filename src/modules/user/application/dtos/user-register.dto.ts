@@ -1,12 +1,13 @@
 import {
   IsEnum,
+  IsInt,
   IsString,
   IsStrongPassword,
   MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
-import { UserRole } from '../../../../common/types/user-role.enum';
+import { UserRole } from '../../../../common/enums/user-role.enum';
 
 export class UserRegisterDto {
   @IsString()
@@ -23,6 +24,7 @@ export class UserRegisterDto {
   })
   password: string;
 
+  @IsInt()
   @Min(1)
   age: number;
 

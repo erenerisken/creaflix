@@ -10,7 +10,7 @@ import { User } from '../domain/entities/user.entity';
 import { Repository } from 'typeorm';
 import { generateSalt, getPasswordHash } from '../utils/password.utils';
 import { JwtPayload } from '../../../common/types/jwt-payload.type';
-import { UserRole } from '../../../common/types/user-role.enum';
+import { UserRole } from '../../../common/enums/user-role.enum';
 import { getExpTimestamp } from '../utils/token.utils';
 import { sign } from 'jsonwebtoken';
 import * as process from 'process';
