@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { MovieService } from '../application/movie.service';
-import { MovieCreateDto } from '../application/dtos/movie-create.dto';
+import { MovieUpsertDto } from '../application/dtos/movie-upsert.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RoleGuard } from '../../../common/guards/role.guard';
 
@@ -11,8 +11,8 @@ export class MovieController {
 
   @UseGuards(RoleGuard)
   @Post()
-  async create(@Body() movieCreateDto: MovieCreateDto) {
-    await this.movieService.create(movieCreateDto);
+  async create(@Body() movieUpsertDto: MovieUpsertDto) {
+    await this.movieService.create(movieUpsertDto);
 
     return { result: 'success' };
   }
