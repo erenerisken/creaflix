@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   DefaultValuePipe,
+  Delete,
   Get,
   Param,
   ParseEnumPipe,
@@ -74,6 +75,14 @@ export class MovieController {
     @Body() movieUpsertDto: MovieUpsertDto,
   ) {
     await this.movieService.update(id, movieUpsertDto);
+
+    return { result: 'success' };
+  }
+
+  @UseGuards(RoleGuard)
+  @Delete(':id')
+  async delete(@Param('id', new ParseIntPipe()) id: number) {
+    await this.movieService.delete(id);
 
     return { result: 'success' };
   }

@@ -62,6 +62,44 @@ export class MovieService {
     });
   }
 
+  async list(filters: MovieFilter): Promise<MoviesListDto> {
+    const { name, permittedForAge, sortCriteria, pagination, order } = filters;
+
+    const options: FindManyOptions<Movie> = {
+      relations: ['sessions'],
+      where: {},
+      order: {
+        [sortCriteria]: order,
+      },
+    };
+
+    if (name) {
+      options.where['name'] = Like(`%${name}%`);
+    }
+
+    if (permittedForAge) {
+      options.where['minAge'] = LessThanOrEqual(permittedForAge);
+    }
+
+    if (pagination) {
+      options.skip = (pagination.pageNumber - 1) * pagination.pageSize;
+      options.take = pagination.pageSize;
+    }
+
+    const [movies, totalCount] =
+      await this.movieRepository.findAndCount(options);
+
+    const result = new MoviesListDto();
+    result.movies = movies;
+    if (pagination) {
+      result.totalCount = totalCount;
+      result.pageNumber = pagination.pageNumber;
+      result.pageSize = pagination.pageSize;
+    }
+
+    return result;
+  }
+
   async update(movieId: number, movieUpsertDto: MovieUpsertDto): Promise<void> {
     await this.movieRepository.manager.transaction(async (txn) => {
       const existingMovie = await txn.findOne(Movie, {
@@ -145,41 +183,15 @@ export class MovieService {
     });
   }
 
-  async list(filters: MovieFilter): Promise<MoviesListDto> {
-    const { name, permittedForAge, sortCriteria, pagination, order } = filters;
+  async delete(movieId: number): Promise<void> {
+    await this.movieRepository.manager.transaction(async (txn) => {
+      const movie = await txn.findOne(Movie, { where: { id: movieId } });
 
-    const options: FindManyOptions<Movie> = {
-      relations: ['sessions'],
-      where: {},
-      order: {
-        [sortCriteria]: order,
-      },
-    };
+      if (!movie) {
+        throw new NotFoundException('Movie not found');
+      }
 
-    if (name) {
-      options.where['name'] = Like(`%${name}%`);
-    }
-
-    if (permittedForAge) {
-      options.where['minAge'] = LessThanOrEqual(permittedForAge);
-    }
-
-    if (pagination) {
-      options.skip = (pagination.pageNumber - 1) * pagination.pageSize;
-      options.take = pagination.pageSize;
-    }
-
-    const [movies, totalCount] =
-      await this.movieRepository.findAndCount(options);
-
-    const result = new MoviesListDto();
-    result.movies = movies;
-    if (pagination) {
-      result.totalCount = totalCount;
-      result.pageNumber = pagination.pageNumber;
-      result.pageSize = pagination.pageSize;
-    }
-
-    return result;
+      await txn.remove(movie);
+    });
   }
 }
