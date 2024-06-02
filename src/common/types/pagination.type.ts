@@ -1,4 +1,4 @@
 export interface Pagination {
-  rowsPerPage: number;
+  pageNumber: number;
   pageSize: number;
 }

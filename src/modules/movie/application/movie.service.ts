@@ -1,10 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Movie } from '../domain/entities/movie.entity';
-import { Repository } from 'typeorm';
+import { FindManyOptions, LessThanOrEqual, Like, Repository } from 'typeorm';
 import { MovieUpsertDto } from './dtos/movie-upsert.dto';
 import { isDbStatusConflict } from '../../../common/utils/psql.util';
 import { Session } from '../domain/entities/session.entity';
+import { MoviesListDto } from './dtos/movies-list.dto';
+import { MovieFilter } from './types/movie-filter.interface';
 
 @Injectable()
 export class MovieService {
@@ -52,5 +54,43 @@ export class MovieService {
         throw err;
       }
     });
+  }
+
+  async list(filters: MovieFilter): Promise<MoviesListDto> {
+    const { name, permittedForAge, sortCriteria, pagination, order } = filters;
+
+    const options: FindManyOptions<Movie> = {
+      relations: ['sessions'],
+      where: {},
+      order: {
+        [sortCriteria]: order,
+      },
+    };
+
+    if (name) {
+      options.where['name'] = Like(`%${name}%`);
+    }
+
+    if (permittedForAge) {
+      options.where['minAge'] = LessThanOrEqual(permittedForAge);
+    }
+
+    if (pagination) {
+      options.skip = (pagination.pageNumber - 1) * pagination.pageSize;
+      options.take = pagination.pageSize;
+    }
+
+    const [movies, totalCount] =
+      await this.movieRepository.findAndCount(options);
+
+    const result = new MoviesListDto();
+    result.movies = movies;
+    if (pagination) {
+      result.totalCount = totalCount;
+      result.pageNumber = pagination.pageNumber;
+      result.pageSize = pagination.pageSize;
+    }
+
+    return result;
   }
 }
