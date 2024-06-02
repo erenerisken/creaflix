@@ -4,12 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 import { Ticket } from '../../ticket/domain/entities/ticket.entity';
 import { TimeService } from '../../time/application/time.service';
 import { WatchMovieDto } from './dtos/watch-movie.dto';
 import { WatchHistoryEntryDto } from './dtos/watch-history-entry.dto';
 import { History } from '../domain/entities/history.entity';
+import { Pagination } from '../../../common/types/pagination.type';
+import { WatchHistoryListDto } from './dtos/watch-history-list.dto';
 
 @Injectable()
 export class WatchService {
@@ -53,5 +55,41 @@ export class WatchService {
     watchHistoryEntryDto.watchedAt = now;
 
     return watchHistoryEntryDto;
+  }
+
+  async listHistory(
+    userId: number,
+    pagination?: Pagination,
+  ): Promise<WatchHistoryListDto> {
+    const options: FindManyOptions<History> = {
+      relations: ['movie'],
+      where: { userId },
+      order: { watchedAt: 'desc' },
+    };
+
+    if (pagination) {
+      options.skip = (pagination.pageNumber - 1) * pagination.pageSize;
+      options.take = pagination.pageSize;
+    }
+
+    const [entries, totalCount] =
+      await this.historyRepository.findAndCount(options);
+
+    const result = new WatchHistoryListDto();
+    result.history = entries.map((entry) => {
+      const watchHistoryEntryDto = new WatchHistoryEntryDto();
+      watchHistoryEntryDto.movieId = entry.movieId;
+      watchHistoryEntryDto.movieName = entry.movie.name;
+      watchHistoryEntryDto.watchedAt = entry.watchedAt;
+
+      return watchHistoryEntryDto;
+    });
+    if (pagination) {
+      result.totalCount = totalCount;
+      result.pageNumber = pagination.pageNumber;
+      result.pageSize = pagination.pageSize;
+    }
+
+    return result;
   }
 }
