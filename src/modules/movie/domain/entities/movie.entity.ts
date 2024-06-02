@@ -1,5 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Session } from './session.entity';
+import { History } from '../../../watch/domain/entities/history.entity';
 
 @Entity()
 export class Movie {
@@ -14,4 +15,7 @@ export class Movie {
 
   @OneToMany(() => Session, (session) => session.movie)
   sessions: Session[];
+
+  @OneToMany(() => History, (history) => history.movie)
+  historyEntries: History[];
 }

@@ -34,12 +34,12 @@ export class TicketService {
       throw new NotFoundException('Session not found');
     }
 
-    if (session.movie.minAge > userAge) {
-      throw new BadRequestException('Minimum age restriction not satisfied');
-    }
-
     if (session.isExpired(this.timeService.now())) {
       throw new BadRequestException('Session is expired');
+    }
+
+    if (session.movie.minAge > userAge) {
+      throw new BadRequestException('Minimum age restriction not satisfied');
     }
 
     const ticket = new Ticket();

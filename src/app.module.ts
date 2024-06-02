@@ -7,6 +7,7 @@ import { MovieModule } from './modules/movie/movie.module';
 import { JwtModule } from '@nestjs/jwt';
 import * as process from 'process';
 import { TicketModule } from './modules/ticket/ticket.module';
+import { WatchModule } from './modules/watch/watch.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { TicketModule } from './modules/ticket/ticket.module';
     MovieModule,
     TicketModule,
     UserModule,
+    WatchModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,
