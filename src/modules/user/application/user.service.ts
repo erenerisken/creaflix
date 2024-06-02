@@ -38,6 +38,7 @@ export class UserService {
     }
 
     const jwtPayload: JwtPayload = {
+      id: user.id,
       username: user.username,
       age: user.age,
       role: user.role as UserRole,
