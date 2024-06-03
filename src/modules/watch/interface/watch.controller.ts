@@ -16,13 +16,35 @@ import { Request } from 'express';
 import { WatchHistoryEntryDto } from '../application/dtos/watch-history-entry.dto';
 import { WatchHistoryListDto } from '../application/dtos/watch-history-list.dto';
 import { Pagination } from '../../../common/types/pagination.type';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('watch')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('watch')
 export class WatchController {
   constructor(private watchService: WatchService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Watch a booked movie session' })
+  @ApiBody({ type: WatchMovieDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Successful watch operation',
+    type: WatchHistoryEntryDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 404,
+    description: 'Ticket not found',
+  })
   async watch(
     @Body() watchMovieDto: WatchMovieDto,
     @Req() request: Request,
@@ -33,6 +55,27 @@ export class WatchController {
   }
 
   @Get('history')
+  @ApiOperation({ summary: 'List watch history' })
+  @ApiQuery({
+    name: 'page-size',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'page-number',
+    required: false,
+    type: Number,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Watch history',
+    type: WatchHistoryListDto,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async listHistory(
     @Query('page-size', new DefaultValuePipe(-1), ParseIntPipe)
     pageSize: number,
