@@ -4,15 +4,18 @@ import { Movie } from '../modules/movie/domain/entities/movie.entity';
 import { Session } from '../modules/movie/domain/entities/session.entity';
 import { Ticket } from '../modules/ticket/domain/entities/ticket.entity';
 import { History } from '../modules/watch/domain/entities/history.entity';
+import * as dotenv from 'dotenv';
+import * as process from 'process';
 
-//TODO: Move credentials to environment
+dotenv.config();
+
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'crea',
-  password: 'flix',
-  database: 'creaflix',
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
   ssl: false,
   entities: [History, Movie, Session, Ticket, User],
   migrations: [__dirname + '/migrations/*.ts'],
