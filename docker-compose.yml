@@ -1,0 +1,20 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - 'tmp_pgdata:/var/lib/postgresql/data'
+
+volumes:
+  tmp_pgdata:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs

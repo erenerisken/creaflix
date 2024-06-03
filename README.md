@@ -35,18 +35,35 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
-## Test
+## Unit Tests
 
 ```bash
-# unit tests
 $ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
 ```
+
+## E2E Tests
+
+E2E tests require a PostgreSQL instance up and running. You can use following
+command to start one (requires Docker):
+
+```bash
+$ docker-compose up -d
+```
+
+Then you can run e2e tests with following command
+
+```bash
+$ yarn run test:e2e
+```
+
+After running the tests, you can stop the DB container with following command:
+
+```bash
+$ docker-compose down
+```
+
+I'm sure there's a better way of doing this but due to time constraints,
+this is the best I could do :) Currently, only user module is e2e tested.
 
 ## Modules
 

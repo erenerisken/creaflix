@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import * as process from 'process';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-dotenv.config();
+dotenv.config({ path: process.env.NODE_ENV == 'test' ? '.env.test' : '.env' });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -7,7 +7,7 @@ import { History } from '../modules/watch/domain/entities/history.entity';
 import * as dotenv from 'dotenv';
 import * as process from 'process';
 
-dotenv.config();
+dotenv.config({ path: process.env.NODE_ENV == 'test' ? '.env.test' : '.env' });
 
 export const dbConfig: DataSourceOptions = {
   type: 'postgres',
