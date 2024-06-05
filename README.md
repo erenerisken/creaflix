@@ -25,6 +25,9 @@ You should also have a PostgreSQL server running and available to be connected w
 provided credentials in the environment.
 
 ```bash
+# Running migrations
+$ yarn run typeorm migration:run -d src/db/config.ts
+ 
 # development
 $ yarn run start
 
